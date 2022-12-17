@@ -19,7 +19,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -44,47 +46,42 @@ public class AdminController {
     }
 
     @GetMapping()
-    public Pair<Pair<UserDTO, User>, Pair<List<UserDTO>, List<Role>>> printAllUsers() {
+    public Map<String, Object> printAllUsers() {
+        Map<String, Object> resMap = new HashMap<>();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDTO admin = convertToDTO((User) authentication.getPrincipal());
         List<Role> roles = userService.getAllRoles();
-        for (Role r : roles) {
-            System.out.println(r.getAuthority());
-        }
+
         List<UserDTO> users = userService.getListOfUsers().stream()
                 .map(this::convertToDTO).collect(Collectors.toList());
+        resMap.put("admin", admin);
+        resMap.put("users", users);
+        resMap.put("roles", roles);
 
-        User user = new User();
-        return Pair.of(Pair.of(admin, user), Pair.of(users, roles));
+        return resMap;
     }
-//    @GetMapping()
-//    public List<UserDTO> printAllUsers() {
-//        List<UserDTO> users = userService.getListOfUsers().stream()
-//                .map(this::convertToDTO).collect(Collectors.toList());
-//        for (UserDTO user : users) {
-//            System.out.println(user);
-//        }
-//        return users;
-//    }
+
+
 
     @PostMapping()
-    public Pair<Pair<UserDTO, User>, Pair<List<UserDTO>, List<Role>>> creat(@RequestBody User userDTO) {
+    public Map<String, Object> creat(@RequestBody User userDTO) {
         userService.save(userDTO);
         return printAllUsers();
     }
 
 
     @PatchMapping("/{id}")
-    public Pair<Pair<UserDTO, User>, Pair<List<UserDTO>, List<Role>>> update(@RequestBody User user) {
+    public Map<String, Object> update(@RequestBody User user) {
         userService.update(user);
         return printAllUsers();
     }
 
     @DeleteMapping("/{id}")
-    public Pair<Pair<UserDTO, User>, Pair<List<UserDTO>, List<Role>>> delete(@PathVariable("id") long id) {
+    public Map<String, Object> delete(@PathVariable("id") long id) {
         userService.delete(id);
         return printAllUsers();
     }
+
 
     private User convertToUser(UserDTO userDTO) {
         return modelMapper.map(userDTO, User.class);
